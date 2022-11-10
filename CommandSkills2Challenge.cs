@@ -133,18 +133,7 @@ namespace RAB_Skills02
 
 
 
-        const double _inchToMm = 25.4;
-        const double _footToMm = 12 * _inchToMm;
-        const double mToInch = 39.37;
-        const double mToFoot = 3.28;
 
-        /// <summary>
-        /// Convert a given length in feet to millimetres.
-        /// </summary>
-        public static double FootToM(int length)
-        {
-            return length * mToFoot;
-        }
 
 
     }

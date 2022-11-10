@@ -4,7 +4,7 @@
     <Text>Command RAB_Skills02</Text>
     <Description>Some description for RAB_Skills02</Description>
     <Assembly>RAB_Skills02.dll</Assembly>
-    <FullClassName>RAB_Skills02.CommandChallengeLevels</FullClassName>
+    <FullClassName>RAB_Skills02.CommandSkills2Challenge</FullClassName>
     <ClientId>2B4F111E-AC35-43C0-A23E-440D2802C884</ClientId>
     <VendorId>com.typepad.thebuildingcoder</VendorId>
     <VendorDescription>The Building Coder, http://thebuildingcoder.typepad.com</VendorDescription>

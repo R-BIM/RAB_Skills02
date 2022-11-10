@@ -7,6 +7,7 @@ using Autodesk.Revit.UI.Selection;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Dynamic;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
 
@@ -16,7 +17,7 @@ using System.Security.Cryptography.X509Certificates;
 namespace RAB_Skills02
 {
     [Transaction(TransactionMode.Manual)]
-    public class CommandChallengeLevels : IExternalCommand
+    public class CommandSkills2Challenge : IExternalCommand
     {
         public Result Execute(
           ExternalCommandData commandData,
@@ -31,26 +32,27 @@ namespace RAB_Skills02
             try
             {
                 
-                //Create the active document levels
+              //Create the active document levels form a CSV file
 
-                // get the CSV file for the levels
+                // Get the CSV file for the levels
                 string LevfilePath = @"C:\Users\rafik\Downloads\RAB_Session_02_Challenge_Levels.csv";
-
 
                 if (File.Exists(LevfilePath))
                 {
 
-                  string fileContent = File.ReadAllText(LevfilePath);   
                   string[] arrayData = File.ReadAllLines(LevfilePath);
 
-
+                   //Create a list for csv lines
                     List<string> levels = new List<string>();
                     levels.AddRange(arrayData);
+
+                    //Remove the header row
                     levels.RemoveAt(0);
 
-                    Transaction t = new Transaction(doc);
-                    t.Start("Create levels");
-
+                    //Create a transaction for the levels
+                    Transaction levTransaction = new Transaction(doc);
+                    levTransaction.Start("Create levels");
+                    //Loop through the data (levels) 
                     foreach (var level in levels)
                     {
                         //Use String.split method to separate text file data
@@ -63,12 +65,14 @@ namespace RAB_Skills02
                         //Change level elevation values unit from meters to feet
                         double levFValue = UnitUtils.Convert(levMValue, UnitTypeId.Meters, UnitTypeId.Feet);
 
-                        //TaskDialog.Show("level names", levelMElevation.ToString());
+                        //Create and name the levels
                         Level.Create(doc, levFValue).Name = levelName;
 
                     }
+                    //Commit the levels Transaction
+                    levTransaction.Commit();
 
-                    t.Commit();
+
 
                     //Create the active document sheets
                     // get the CSV file for the sheets
@@ -78,28 +82,38 @@ namespace RAB_Skills02
 
                         //Read the CSV lines
                         string[] sheetsArrayData = File.ReadAllLines(ShtsfilePath);
+
+                        //Create a list for csv lines
                         List<string> sheets = new List<string>();
                         sheets.AddRange(sheetsArrayData);
+
+                        //Remove the header row
                         sheets.RemoveAt(0);
 
-                        Transaction tr = new Transaction(doc);
-                        t.Start("Create Sheets");
+                        //Create a transaction for the sheets
+                        Transaction sheetsTransaction = new Transaction(doc);
+                        sheetsTransaction.Start("Create Sheets");
 
+                        //Loop through the data (Sheets)
                         foreach (var sheet in sheets)
                         {
+                            //Create the collector
                             FilteredElementCollector collector = new FilteredElementCollector(doc);
-                            var titleBlockTypeId = collector.OfCategory(BuiltInCategory.OST_TitleBlocks).FirstElementId();
+                            ElementId titleBlockTypeId = collector.OfCategory(BuiltInCategory.OST_TitleBlocks).FirstElementId();
 
+                            //Use String.split method to separate text file data
                             string sheetNumber = sheet.Split(',')[0];
                             string sheetName = sheet.Split(',')[1];
 
+
+                            //Create, number and name the sheets
                             ViewSheet vSheet = ViewSheet.Create(doc, titleBlockTypeId);
                             vSheet.Name = sheetName;
                             vSheet.SheetNumber = sheetNumber;
 
                         }
-
-                        t.Commit();
+                        //Commit the sheets Transaction
+                        sheetsTransaction.Commit();
 
                     }
 
@@ -112,18 +126,12 @@ namespace RAB_Skills02
             {
                 message= e.Message; 
 
-
                 return Result.Failed;
-            }
-
-           
+            }           
 
         }
 
-        private void ConvertFromInternalUnits(int levelFValue)
-        {
-            throw new NotImplementedException();
-        }
+
 
         const double _inchToMm = 25.4;
         const double _footToMm = 12 * _inchToMm;

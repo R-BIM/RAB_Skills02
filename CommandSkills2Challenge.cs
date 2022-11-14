@@ -52,6 +52,7 @@ namespace RAB_Skills02
                     //Create a transaction for the levels
                     Transaction levTransaction = new Transaction(doc);
                     levTransaction.Start("Create levels");
+
                     //Loop through the data (levels) 
                     foreach (var level in levels)
                     {
@@ -67,25 +68,24 @@ namespace RAB_Skills02
 
                         //Create and name the levels
                         Level.Create(doc, levFValue).Name = levelName;
-
                     }
+
                     //Commit the levels Transaction
                     levTransaction.Commit();
-
 
 
                     //Create the active document sheets
                     // get the CSV file for the sheets
                     string ShtsfilePath = @"C:\Users\rafik\Downloads\RAB_Session_02_Challenge_Sheets.csv";
+
                     if (File.Exists(ShtsfilePath))
                     {
-
                         //Read the CSV lines
                         string[] sheetsArrayData = File.ReadAllLines(ShtsfilePath);
 
                         //Create a list for csv lines
                         List<string> sheets = new List<string>();
-                        sheets.AddRange(sheetsArrayData);
+                        sheets.AddRange(sheetsArrayData); 
 
                         //Remove the header row
                         sheets.RemoveAt(0);
@@ -105,18 +105,14 @@ namespace RAB_Skills02
                             string sheetNumber = sheet.Split(',')[0];
                             string sheetName = sheet.Split(',')[1];
 
-
                             //Create, number and name the sheets
                             ViewSheet vSheet = ViewSheet.Create(doc, titleBlockTypeId);
                             vSheet.Name = sheetName;
                             vSheet.SheetNumber = sheetNumber;
-
                         }
                         //Commit the sheets Transaction
                         sheetsTransaction.Commit();
-
                     }
-
                 }
 
                 return Result.Succeeded;
@@ -127,14 +123,8 @@ namespace RAB_Skills02
                 message= e.Message; 
 
                 return Result.Failed;
-            }           
+            }        
 
         }
-
-
-
-
-
-
     }
 }

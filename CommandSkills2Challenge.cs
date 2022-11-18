@@ -19,6 +19,7 @@ namespace RAB_Skills02
     [Transaction(TransactionMode.Manual)]
     public class CommandSkills2Challenge : IExternalCommand
     {
+    
         public Result Execute(
           ExternalCommandData commandData,
           ref string message,
@@ -36,6 +37,7 @@ namespace RAB_Skills02
 
                 // Get the CSV file for the levels
                 string LevfilePath = @"C:\Users\rafik\Downloads\RAB_Session_02_Challenge_Levels.csv";
+
 
                 if (File.Exists(LevfilePath))
                 {
@@ -97,7 +99,7 @@ namespace RAB_Skills02
                         //Loop through the data (Sheets)
                         foreach (var sheet in sheets)
                         {
-                            //Create the collector
+                            //Create the collector and get the title block element ID
                             FilteredElementCollector collector = new FilteredElementCollector(doc);
                             ElementId titleBlockTypeId = collector.OfCategory(BuiltInCategory.OST_TitleBlocks).FirstElementId();
 
@@ -112,6 +114,7 @@ namespace RAB_Skills02
                         }
                         //Commit the sheets Transaction
                         sheetsTransaction.Commit();
+                        sheetsTransaction.Dispose();
                     }
                 }
 

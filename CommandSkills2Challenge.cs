@@ -1,15 +1,15 @@
 #region Namespaces
-using Autodesk.Revit.ApplicationServices;
+
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using Autodesk.Revit.UI.Selection;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Dynamic;
 using System.IO;
-using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography;
+using System.Windows.Forms;
+
+
 
 
 #endregion
@@ -19,75 +19,115 @@ namespace RAB_Skills02
     [Transaction(TransactionMode.Manual)]
     public class CommandSkills2Challenge : IExternalCommand
     {
-    
+
         public Result Execute(
           ExternalCommandData commandData,
           ref string message,
           ElementSet elements)
         {
-            UIApplication uiapp = commandData.Application;
-            UIDocument uidoc = uiapp.ActiveUIDocument;
-            Application app = uiapp.Application;
+
+            UIDocument uidoc = commandData.Application.ActiveUIDocument;
             Document doc = uidoc.Document;
 
             try
             {
-                
-              //Create the active document levels form a CSV file
-
-                // Get the CSV file for the levels
-                string LevfilePath = @"C:\Users\rafik\Downloads\RAB_Session_02_Challenge_Levels.csv";
-
-
-                if (File.Exists(LevfilePath))
+                using (OpenFileDialog openFileDialog = new OpenFileDialog())
                 {
+                    openFileDialog.InitialDirectory = "C : \\";
+                    openFileDialog.Filter = "csv files (*.csv) | *.csv | All files (*.*)|*.*";
+                    openFileDialog.FilterIndex = 1;
+                    openFileDialog.RestoreDirectory = true;
 
-                  string[] arrayData = File.ReadAllLines(LevfilePath);
-
-                   //Create a list for csv lines
-                    List<string> levels = new List<string>();
-                    levels.AddRange(arrayData);
-
-                    //Remove the header row
-                    levels.RemoveAt(0);
-
-                    //Create a transaction for the levels
-                    Transaction levTransaction = new Transaction(doc);
-                    levTransaction.Start("Create levels");
-
-                    //Loop through the data (levels) 
-                    foreach (var level in levels)
+                    if (openFileDialog.ShowDialog() == DialogResult.OK)
                     {
-                        //Use String.split method to separate text file data
-                        string levelName = level.Split(',')[0];
-                        string levelValue = level.Split(',')[2];
+                        // Get the CSV file for the levels
+                        string LevfilePath = openFileDialog.FileName;
 
-                        //Change level elevation values from string to double
-                        double levMValue = Convert.ToDouble(levelValue);
+                        //Create the active document levels form a CSV file
+                        string[] arrayData = File.ReadAllLines(LevfilePath);
 
-                        //Change level elevation values unit from meters to feet
-                        double levFValue = UnitUtils.Convert(levMValue, UnitTypeId.Meters, UnitTypeId.Feet);
+                        //Create a list for csv lines
+                        List<string> levels = new List<string>();
+                        levels.AddRange(arrayData);
 
-                        //Create and name the levels
-                        Level.Create(doc, levFValue).Name = levelName;
+                        //Remove the header row
+                        levels.RemoveAt(0);
+
+                        //Create a transaction for the levels
+                        Transaction levTransaction = new Transaction(doc);
+                        levTransaction.Start("Create levels");
+
+                        //Loop through the data (levels) 
+                        foreach (var level in levels)
+                        {
+                            //Use String.split method to separate text file data
+                            string levelName = level.Split(',')[0];
+                            string levelValue = level.Split(',')[2];
+                            
+                            //Change level elevation values from string to double
+                            double levMValue = Convert.ToDouble(levelValue);
+
+                            //Change level elevation values unit from meters to feet
+                            double levFValue = UnitUtils.Convert(levMValue, UnitTypeId.Meters, UnitTypeId.Feet);
+
+                            //Create and name the levels
+                            Level.Create(doc, levFValue).Name = levelName;
+                            ElementId levelId = Level.Create(doc, levFValue).Id;
+
+
+                            //Get viewFamilyTypeId
+
+                            FilteredElementCollector viewTCollector = new FilteredElementCollector(doc);
+                            FilteredElementCollector viewTypes = viewTCollector.OfCategory(BuiltInCategory.OST_Views).WhereElementIsElementType();
+                          
+                            //Get level Id
+
+                            foreach (ElementType vType in viewTypes) 
+                            {
+                                if (vType.Name == "Floor Plan")
+                                {
+
+                                    ElementId viewFamilyTypeId =vType.Id;
+
+                                    //Create view plans
+                                    ViewPlan.Create(doc, viewFamilyTypeId,levelId);
+                                }
+                            }    
+
+
+
+                          //Create RCPs
+                        }
+
+
+
+                        //Commit the levels Transaction
+                        levTransaction.Commit();
                     }
 
-                    //Commit the levels Transaction
-                    levTransaction.Commit();
+                }
 
+                using (OpenFileDialog openFileDialog = new OpenFileDialog())
+                {
+                    openFileDialog.InitialDirectory = "C : \\";
+                    openFileDialog.Filter = "csv files (*.csv) | *.csv | All files (*.*)|*.*";
+                    openFileDialog.FilterIndex = 2;
+                    openFileDialog.RestoreDirectory = true;
 
-                    //Create the active document sheets
-                    // get the CSV file for the sheets
-                    string ShtsfilePath = @"C:\Users\rafik\Downloads\RAB_Session_02_Challenge_Sheets.csv";
-
-                    if (File.Exists(ShtsfilePath))
+                    if (openFileDialog.ShowDialog() == DialogResult.OK)
                     {
+
+                        //Create the active document sheets
+                        // get the CSV file for the sheets
+                        string ShtsfilePath = openFileDialog.FileName;
+
+
                         //Read the CSV lines
                         string[] sheetsArrayData = File.ReadAllLines(ShtsfilePath);
 
                         //Create a list for csv lines
                         List<string> sheets = new List<string>();
-                        sheets.AddRange(sheetsArrayData); 
+                        sheets.AddRange(sheetsArrayData);
 
                         //Remove the header row
                         sheets.RemoveAt(0);
@@ -115,7 +155,9 @@ namespace RAB_Skills02
                         //Commit the sheets Transaction
                         sheetsTransaction.Commit();
                         sheetsTransaction.Dispose();
+
                     }
+
                 }
 
                 return Result.Succeeded;
@@ -123,10 +165,10 @@ namespace RAB_Skills02
 
             catch (Exception e)
             {
-                message= e.Message; 
+                message = e.Message;
 
                 return Result.Failed;
-            }        
+            }
 
         }
     }

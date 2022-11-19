@@ -84,13 +84,13 @@ namespace RAB_Skills02
 
                             foreach (ElementType vType in viewTypes) 
                             {
-                                if (vType.Name == "Floor Plan")
+                                if (vType.Name == "FloorPlan")
                                 {
 
                                     ElementId viewFamilyTypeId =vType.Id;
 
                                     //Create view plans
-                                    ViewPlan.Create(doc, viewFamilyTypeId,levelId);
+                                    ViewPlan.Create(doc, viewFamilyTypeId,levelId).Name = levelName;
                                 }
                             }    
 

@@ -165,9 +165,10 @@ namespace RAB_Skills02
                             //Create the vftCollector and get the title block element ID
                             //FilteredElementCollector tBlockcollector = new FilteredElementCollector(doc);
                             //ElementId titleBlockTypeId = tBlockcollector.OfCategory(BuiltInCategory.OST_TitleBlocks).FirstElementId();
+
+                            //Using the GetTitleBlockByName method
                             Element tb = GetTitleBlockByName(doc,"E1 30x42 Horizontal");
                             ElementId tbId= tb.Id;
-
 
                             //Use String.split method to separate text file data
                             string sheetNumber = sheet.Split(',')[0];
@@ -204,8 +205,6 @@ namespace RAB_Skills02
                      .Cast<ViewSheet>()
                      .ToList();
 
-                //FilteredElementCollector shCollector = new FilteredElementCollector(doc);
-                //shCollector.OfClass(typeof(ViewSheet));
 
                 FilteredElementCollector vpCollector = new FilteredElementCollector(doc);
                 IList<Autodesk.Revit.DB.View> views = vpCollector.OfClass(typeof(ViewPlan))
@@ -213,6 +212,9 @@ namespace RAB_Skills02
                     .Cast<Autodesk.Revit.DB.View>()
                     .ToList();
 
+                //testing the geViewByName without using it 
+                Element view = GetViewByName(doc, "Level01");
+                
                 foreach (var vSheet in viewSheets)
                 {
                     foreach (var v in views)
@@ -262,5 +264,24 @@ namespace RAB_Skills02
                 return null;
 
         }
+
+        internal Element GetViewByName(Document doc, string name)
+        {
+            FilteredElementCollector vCollecor = new FilteredElementCollector(doc);
+            vCollecor.OfCategory(BuiltInCategory.OST_Views);
+
+            foreach (Element v in vCollecor)
+            {
+
+                if (v.Name == name)
+
+                    return v;
+            }
+
+            return null;
+
+        }
+
+
     }
 }

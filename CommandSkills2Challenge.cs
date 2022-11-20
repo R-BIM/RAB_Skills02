@@ -5,9 +5,9 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
-using System.IO;
 
 
 #endregion
@@ -25,16 +25,13 @@ namespace RAB_Skills02
 
             try
             {
-
-                
-                //create levels from a csv file
+                //create levels from a csv file using OpenFileDialog
                 using (OpenFileDialog openfiledialog = new OpenFileDialog())
                 {
-                    
                     openfiledialog.InitialDirectory = "c : \\";
-                    openfiledialog.Filter = "csv files (*.csv) | *.csv | all files (*.*) | *.*";
-                    openfiledialog.FilterIndex = 1;
-                    openfiledialog.RestoreDirectory = true;
+                    openfiledialog.Filter = "csv files (*.csv)|*.csv|allfiles(*.*)|*.*";
+                    //openfiledialog.FilterIndex = 1;
+                    //openfiledialog.RestoreDirectory = true;
 
                     if (openfiledialog.ShowDialog() == DialogResult.OK)
                     {
@@ -74,77 +71,79 @@ namespace RAB_Skills02
                             //elementid levelid = levv.id;
 
                         }
-
                         //commit the levels transaction
                         levtransaction.Commit();
+                        levtransaction.Dispose();
                     }
-
                 }
+            }
 
+            catch (Exception e)
+            {
+                message = e.Message;
+                return Result.Failed;
+            }
+
+
+            try
+            {
                 //Create Viewplanes for each level in the doc
-
 
                 //Create a transaction for the viewplane creation
                 Transaction viewPlnTransaction = new Transaction(doc);
                 viewPlnTransaction.Start("Create viewPlans");
 
-                //Get viewFamilyTypeId
+                //Get viewFamilyTypes
+                FilteredElementCollector vftCollector = new FilteredElementCollector(doc);
+                vftCollector.OfClass(typeof(ViewFamilyType));
 
-                FilteredElementCollector collector = new FilteredElementCollector(doc);
-                IList<ViewFamilyType> viewFType = collector.OfClass(typeof(ViewFamilyType))
-                    .Cast<ViewFamilyType>()
-                    .ToList();
+                //Get levels
+                FilteredElementCollector levelsCollector = new FilteredElementCollector(doc);
+                levelsCollector.OfClass(typeof(Level))
+                    .WhereElementIsNotElementType();
 
 
-                //Get level Id
-
-                FilteredElementCollector leCollector = new FilteredElementCollector(doc);
-                IList<Level> levvv = leCollector.OfClass(typeof(Level))
-                    .WhereElementIsNotElementType()
-                    .Cast<Level>()
-                    .ToList();
-
-                foreach (Level lvl in levvv)
+                foreach (Level lvl in levelsCollector)
                 {
-                    ElementId lvlId = lvl.Id;
+                    ViewFamilyType planVFT = null;
+                    ViewFamilyType rcpVFT = null;
 
-
-                    foreach (ElementType vType in viewFType)
+                    foreach (ViewFamilyType vft in vftCollector)
                     {
-                        if (vType.Name == "Plan d'étage")
-                        {
 
-                            ElementId viewFamilyTypeId = vType.Id;
+                        if (vft.ViewFamily == ViewFamily.FloorPlan)
+                            planVFT = vft;
 
-                            //Create view plans
-                            ViewPlan.Create(doc, viewFamilyTypeId, lvlId);
-                        }
+                        if (vft.ViewFamily == ViewFamily.CeilingPlan)
+                            rcpVFT = vft;
                     }
+
+                    //Create plan and RCP views
+                    ViewPlan floorlan = ViewPlan.Create(doc, planVFT.Id, lvl.Id);
+                    ViewPlan rcpPlan = ViewPlan.Create(doc, rcpVFT.Id, lvl.Id);
+
+                    //Rename the RCP plans to add "RCP" suffix
+                    rcpPlan.Name = rcpPlan.Name + " RCP";
+
                 }
                 //Commit and dispose the viewPlans transaction
                 viewPlnTransaction.Commit();
                 viewPlnTransaction.Dispose();
 
 
-
-                //Create RCPs
-
-
-                //Create sheets from a csv file
+                //Create sheets from a csv file using OpenFileDialog
                 using (OpenFileDialog openFileDialog = new OpenFileDialog())
                 {
                     openFileDialog.InitialDirectory = "C : \\";
-                    openFileDialog.Filter = "csv files (*.csv) | *.csv | All files (*.*) | *.*";
-                    openFileDialog.FilterIndex = 2;
-                    openFileDialog.RestoreDirectory = true;
+                    openFileDialog.Filter = "csv files(*.csv)|*.csv|All files(*.*)|*.*";
+                    //openFileDialog.FilterIndex = 2;
+                    //openFileDialog.RestoreDirectory = true;
 
                     if (openFileDialog.ShowDialog() == DialogResult.OK)
                     {
-
                         //Create the active document sheets
                         // get the CSV file for the sheets
                         string ShtsfilePath = openFileDialog.FileName;
-
 
                         //Read the CSV lines
                         string[] sheetsArrayData = File.ReadAllLines(ShtsfilePath);
@@ -163,7 +162,7 @@ namespace RAB_Skills02
                         //Loop through the data (Sheets)
                         foreach (var sheet in sheets)
                         {
-                            //Create the collector and get the title block element ID
+                            //Create the vftCollector and get the title block element ID
                             FilteredElementCollector tBlockcollector = new FilteredElementCollector(doc);
                             ElementId titleBlockTypeId = tBlockcollector.OfCategory(BuiltInCategory.OST_TitleBlocks).FirstElementId();
 
@@ -178,22 +177,69 @@ namespace RAB_Skills02
                         }
                         //Commit the sheets Transaction
                         sheetsTransaction.Commit();
-                        sheetsTransaction.Dispose();
-
                     }
-
                 }
-
-                return Result.Succeeded;
             }
-
             catch (Exception e)
             {
                 message = e.Message;
-
                 return Result.Failed;
             }
 
+            //insert views in sheets
+
+            try
+            {
+                //Create a transaction for the Insertion of views in sheets
+                Transaction trans = new Transaction(doc);
+                trans.Start("InsertViews in sheets");
+
+                // Collect sheets in the active document
+                IList<ViewSheet> viewSheets = new FilteredElementCollector(doc)
+                     .OfCategory(BuiltInCategory.OST_Sheets)
+                     .WhereElementIsNotElementType()
+                     .Cast<ViewSheet>()
+                     .ToList();
+
+                //FilteredElementCollector shCollector = new FilteredElementCollector(doc);
+                //shCollector.OfClass(typeof(ViewSheet));
+
+                FilteredElementCollector vpCollector = new FilteredElementCollector(doc);
+                IList<Autodesk.Revit.DB.View> views = vpCollector.OfClass(typeof(ViewPlan))
+                    .WhereElementIsNotElementType()
+                    .Cast<Autodesk.Revit.DB.View>()
+                    .ToList();
+
+                foreach (var vSheet in viewSheets)
+                {
+                    foreach (var v in views)
+                    {
+                        if (v != null && !v.IsTemplate)
+                        {
+                            // Get the middle point of the sheet (insertion point)
+                            BoundingBoxUV outline = vSheet.Outline;
+                            double x = (outline.Max.U + outline.Min.U) / 2;
+                            double y = (outline.Max.V + outline.Min.V) / 2;
+
+                            XYZ midpt = new XYZ(x, y, 0);
+
+                            //Create the viewport
+                            if (Viewport.CanAddViewToSheet(doc, vSheet.Id, v.Id) && (vSheet.Name.Contains(v.Name)))
+                            {
+                                Viewport vport = Viewport.Create(doc, vSheet.Id, v.Id, midpt);
+                            }
+                        }
+                    }
+                }
+                trans.Commit();
+                trans.Dispose();
+            }
+            catch (Exception e)
+            {
+                message = e.Message;
+                return Result.Failed;
+            }
+            return Result.Succeeded;
         }
     }
 }

@@ -163,15 +163,18 @@ namespace RAB_Skills02
                         foreach (var sheet in sheets)
                         {
                             //Create the vftCollector and get the title block element ID
-                            FilteredElementCollector tBlockcollector = new FilteredElementCollector(doc);
-                            ElementId titleBlockTypeId = tBlockcollector.OfCategory(BuiltInCategory.OST_TitleBlocks).FirstElementId();
+                            //FilteredElementCollector tBlockcollector = new FilteredElementCollector(doc);
+                            //ElementId titleBlockTypeId = tBlockcollector.OfCategory(BuiltInCategory.OST_TitleBlocks).FirstElementId();
+                            Element tb = GetTitleBlockByName(doc,"E1 30x42 Horizontal");
+                            ElementId tbId= tb.Id;
+
 
                             //Use String.split method to separate text file data
                             string sheetNumber = sheet.Split(',')[0];
                             string sheetName = sheet.Split(',')[1];
 
                             //Create, number and name the sheets
-                            ViewSheet vSheet = ViewSheet.Create(doc, titleBlockTypeId);
+                            ViewSheet vSheet = ViewSheet.Create(doc, tbId);
                             vSheet.Name = sheetName;
                             vSheet.SheetNumber = sheetNumber;
                         }
@@ -240,6 +243,24 @@ namespace RAB_Skills02
                 return Result.Failed;
             }
             return Result.Succeeded;
+
+        }
+
+        internal Element GetTitleBlockByName (Document doc, string name)
+        {
+            FilteredElementCollector tbCollecor = new FilteredElementCollector(doc);
+            tbCollecor.OfCategory(BuiltInCategory.OST_TitleBlocks);
+
+                foreach (Element tb in tbCollecor)
+	            {
+
+                if (tb.Name == name)
+
+                    return tb;
+	            }
+
+                return null;
+
         }
     }
 }

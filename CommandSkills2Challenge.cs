@@ -25,7 +25,7 @@ namespace RAB_Skills02
 
             try
             {
-                //create levels from a csv file using OpenFileDialog
+                //create levelsList from a csv file using OpenFileDialog
                 using (OpenFileDialog openfiledialog = new OpenFileDialog())
                 {
                     openfiledialog.InitialDirectory = "c : \\";
@@ -35,63 +35,74 @@ namespace RAB_Skills02
 
                     if (openfiledialog.ShowDialog() == DialogResult.OK)
                     {
-                        // get the csv file for the levels
+                        // get the csv file for the levelsList
                         string levfilepath = openfiledialog.FileName;
 
-
-
-                        
-                        //create levels form a csv file
+                        //create an array from the levelsList form a csv file
                         string[] arraydata = File.ReadAllLines(levfilepath);
+                        arraydata = arraydata.Where(w => w != arraydata[0]).ToArray();
 
-                        //create a list for csv lines
-                        List<string> levels = new List<string>();
-                        levels.AddRange(arraydata);
 
-                        //remove the header row
-                        levels.RemoveAt(0);
-
-                        //create a transaction for the levels
-                        Transaction levtransaction = new Transaction(doc);
-                        levtransaction.Start("create levels");
-
-                        //loop through the data (levels) 
-                        foreach (var level in levels)
+                        foreach (string item in arraydata)
                         {
+                            //Create an instance of the "MyLevelStruct" structure adn populate the data from the levelsList csv file                            
+                            MylevelsStruct mylevStruct = new MylevelsStruct();
+                            mylevStruct.Name = item.Split(',')[0];
+                            mylevStruct.Value1 = item.Split(',')[1];
+                            mylevStruct.Value2 = item.Split(',')[2];
 
-                            //use string.split method to separate text file data
-                            string levelName = level.Split(',')[0];
-                            string levelValue = level.Split(',')[2];
+                            List<MylevelsStruct> mylevList = new List<MylevelsStruct>();
+                            mylevList.Add(mylevStruct);
 
-                            //Create a structure from the levels csv file
-                            //public MyStruct(string levelName, string elevationM, string elevationFT)
-                            MyStruct levStruct = new MyStruct(levelName, levelValue);
 
-                            //change level elevation values from string to double
-                            double levmvalue = Convert.ToDouble(levelvalue);
 
-                            //change level elevation values unit from meters to feet
-                            double levfvalue = UnitUtils.Convert(levmvalue, UnitTypeId.Meters, UnitTypeId.Feet);
+                            //create a list for csv lines
+                            //List<string> levelsList = new List<string>();
 
-                            //create and name the levels
-                            Level levv = Level.Create(doc, levfvalue);
-                            levv.Name = levelname;
-                            //elementid levelid = levv.id;
+                            ////levelsList.AddRange(arraydata);
 
+
+                            ////remove the header row
+                            //mylevList.RemoveAt(0);
+
+                            //create a transaction for the mylevelsList
+                            Transaction levtransaction = new Transaction(doc);
+                            levtransaction.Start("create levelsList");
+
+                            //loop through the data (mylevList) 
+                            foreach (MylevelsStruct level in mylevList)
+                            {
+                                //use string.split method to separate text file data
+                                //string levelName = level.Split(',')[0];
+                                //string levelValue = level.Split(',')[2];
+
+
+                                //change level elevation values from string to double
+                                double levmvalue = Convert.ToDouble(mylevStruct.Value2);
+
+                                //change level elevation values unit from meters to feet
+                                double levfvalue = UnitUtils.Convert(levmvalue, UnitTypeId.Meters, UnitTypeId.Feet);
+
+                                //create and name the levelsList
+                                Level lev = Level.Create(doc, levfvalue);
+                                //lev.Name = levelName;
+                                //elementid levelid = lev.id;
+
+                            }
+                            //commit the levelsList transaction
+                            levtransaction.Commit();
+                            levtransaction.Dispose();
                         }
-                        //commit the levels transaction
-                        levtransaction.Commit();
-                        levtransaction.Dispose();
+
+
                     }
                 }
             }
-
             catch (Exception e)
             {
                 message = e.Message;
                 return Result.Failed;
             }
-
 
             try
             {
@@ -105,11 +116,10 @@ namespace RAB_Skills02
                 FilteredElementCollector vftCollector = new FilteredElementCollector(doc);
                 vftCollector.OfClass(typeof(ViewFamilyType));
 
-                //Get levels
+                //Get levelsList
                 FilteredElementCollector levelsCollector = new FilteredElementCollector(doc);
                 levelsCollector.OfClass(typeof(Level))
                     .WhereElementIsNotElementType();
-
 
                 foreach (Level lvl in levelsCollector)
                 {
@@ -138,7 +148,6 @@ namespace RAB_Skills02
                 viewPlnTransaction.Commit();
                 viewPlnTransaction.Dispose();
 
-
                 //Create sheets from a csv file using OpenFileDialog
                 using (OpenFileDialog openFileDialog = new OpenFileDialog())
                 {
@@ -156,7 +165,7 @@ namespace RAB_Skills02
                         //Read the CSV lines
                         string[] sheetsArrayData = File.ReadAllLines(ShtsfilePath);
 
-                        //MyStruct levelStruct = new MyStruct();  
+                        //MylevelsStruct levelStruct = new MylevelsStruct();  
                         //levelStruct.Name.Append<>
 
                         //Create a list for csv lines
@@ -178,8 +187,9 @@ namespace RAB_Skills02
                             //ElementId titleBlockTypeId = tBlockcollector.OfCategory(BuiltInCategory.OST_TitleBlocks).FirstElementId();
 
                             //Using the GetTitleBlockByName method
-                            Element tb = GetTitleBlockByName(doc,"E1 30x42 Horizontal");
-                            ElementId tbId= tb.Id;
+                            //Element tb = GetTitleBlockByName(doc,"E1 30x42 Horizontal");
+                            Element tb = GetTitleBlockByName(doc, "Métrique A1");
+                            ElementId tbId = tb.Id;
 
                             //Use String.split method to separate text file data
                             string sheetNumber = sheet.Split(',')[0];
@@ -225,7 +235,7 @@ namespace RAB_Skills02
 
                 //testing the geViewByName without using it 
                 Element view = GetViewByName(doc, "Level01");
-                
+
                 foreach (var vSheet in viewSheets)
                 {
                     foreach (var v in views)
@@ -259,20 +269,20 @@ namespace RAB_Skills02
 
         }
 
-        internal Element GetTitleBlockByName (Document doc, string name)
+        internal Element GetTitleBlockByName(Document doc, string name)
         {
             FilteredElementCollector tbCollecor = new FilteredElementCollector(doc);
             tbCollecor.OfCategory(BuiltInCategory.OST_TitleBlocks);
 
-                foreach (Element tb in tbCollecor)
-	            {
+            foreach (Element tb in tbCollecor)
+            {
 
                 if (tb.Name == name)
 
                     return tb;
-	            }
+            }
 
-                return null;
+            return null;
 
         }
 
@@ -285,27 +295,36 @@ namespace RAB_Skills02
             {
 
                 if (v.Name == name)
-
                     return v;
             }
-
             return null;
-
         }
 
 
-        struct MyStruct
+        struct MylevelsStruct
         {
             public string Name;
-            public string Value;
-
-            public MyStruct(string name, string value)
+            public string Value1;
+            public string Value2;
+            public MylevelsStruct(string name, string value1, string value2)
             {
                 Name = name;
-                Value = value;               
+                Value1 = value1;
+                Value2 = value2;
             }
-
         }
 
+        struct MySheetsStruct
+        {
+            public string Name;
+            public int Number;
+
+            public MySheetsStruct(string name, int number)
+            {
+                Name = name;
+                Number = number;
+
+            }
+        }
     }
 }

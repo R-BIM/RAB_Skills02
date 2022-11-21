@@ -40,6 +40,9 @@ namespace RAB_Skills02
 
                         //create an array from the levelsList form a csv file
                         string[] arraydata = File.ReadAllLines(levfilepath);
+
+                        //Remove the header row
+                        //arraydata.Skip(0).ToArray();
                         arraydata = arraydata.Where(w => w != arraydata[0]).ToArray();
 
 
@@ -54,8 +57,6 @@ namespace RAB_Skills02
                             List<MylevelsStruct> mylevList = new List<MylevelsStruct>();
                             mylevList.Add(mylevStruct);
 
-
-
                             //create a list for csv lines
                             //List<string> levelsList = new List<string>();
 
@@ -63,29 +64,24 @@ namespace RAB_Skills02
 
 
                             ////remove the header row
-                            //mylevList.RemoveAt(0);
+                            //mySheetsList.RemoveAt(0);
 
                             //create a transaction for the mylevelsList
                             Transaction levtransaction = new Transaction(doc);
                             levtransaction.Start("create levelsList");
 
-                            //loop through the data (mylevList) 
+                            //loop through the data (mySheetsList) 
                             foreach (MylevelsStruct level in mylevList)
                             {
-                                //use string.split method to separate text file data
-                                //string levelName = level.Split(',')[0];
-                                //string levelValue = level.Split(',')[2];
-
-
                                 //change level elevation values from string to double
-                                double levmvalue = Convert.ToDouble(mylevStruct.Value2);
+                                double levmvalue = Convert.ToDouble(level.Value2);
 
                                 //change level elevation values unit from meters to feet
                                 double levfvalue = UnitUtils.Convert(levmvalue, UnitTypeId.Meters, UnitTypeId.Feet);
 
                                 //create and name the levelsList
                                 Level lev = Level.Create(doc, levfvalue);
-                                //lev.Name = levelName;
+                                lev.Name = level.Name;
                                 //elementid levelid = lev.id;
 
                             }
@@ -93,8 +89,6 @@ namespace RAB_Skills02
                             levtransaction.Commit();
                             levtransaction.Dispose();
                         }
-
-
                     }
                 }
             }
@@ -165,41 +159,45 @@ namespace RAB_Skills02
                         //Read the CSV lines
                         string[] sheetsArrayData = File.ReadAllLines(ShtsfilePath);
 
-                        //MylevelsStruct levelStruct = new MylevelsStruct();  
-                        //levelStruct.Name.Append<>
-
-                        //Create a list for csv lines
-                        List<string> sheets = new List<string>();
-                        sheets.AddRange(sheetsArrayData);
-
                         //Remove the header row
-                        sheets.RemoveAt(0);
-
+                        sheetsArrayData.Skip(0).ToArray();
                         //Create a transaction for the sheets
+
                         Transaction sheetsTransaction = new Transaction(doc);
                         sheetsTransaction.Start("Create Sheets");
 
-                        //Loop through the data (Sheets)
-                        foreach (var sheet in sheets)
+                        foreach (var item in sheetsArrayData)
                         {
-                            //Create the vftCollector and get the title block element ID
-                            //FilteredElementCollector tBlockcollector = new FilteredElementCollector(doc);
-                            //ElementId titleBlockTypeId = tBlockcollector.OfCategory(BuiltInCategory.OST_TitleBlocks).FirstElementId();
+                            //Create an instance of the "mySheetsStruct" structure and populate the data from the SheetsList csv file  
+                            MySheetsStruct mySheetsStruct = new MySheetsStruct();
+                            mySheetsStruct.Name = item.Split(',')[0];
+                            mySheetsStruct.Number = item.Split(',')[1];
 
-                            //Using the GetTitleBlockByName method
-                            //Element tb = GetTitleBlockByName(doc,"E1 30x42 Horizontal");
-                            Element tb = GetTitleBlockByName(doc, "Métrique A1");
-                            ElementId tbId = tb.Id;
+                            //Create a list of mySheetsStruct
+                            List<MySheetsStruct> mySheetsList = new List<MySheetsStruct>();
+                            mySheetsList.Add(mySheetsStruct);
 
-                            //Use String.split method to separate text file data
-                            string sheetNumber = sheet.Split(',')[0];
-                            string sheetName = sheet.Split(',')[1];
 
-                            //Create, number and name the sheets
-                            ViewSheet vSheet = ViewSheet.Create(doc, tbId);
-                            vSheet.Name = sheetName;
-                            vSheet.SheetNumber = sheetNumber;
+                            //Loop through the data (Sheets)
+                            foreach (MySheetsStruct sheet in mySheetsList)
+                            {
+                                //Create the vftCollector and get the title block element ID
+                                //FilteredElementCollector tBlockcollector = new FilteredElementCollector(doc);
+                                //ElementId titleBlockTypeId = tBlockcollector.OfCategory(BuiltInCategory.OST_TitleBlocks).FirstElementId();
+
+                                //Using the GetTitleBlockByName method
+                                //Element tb = GetTitleBlockByName(doc,"E1 30x42 Horizontal");
+                                Element tb = GetTitleBlockByName(doc, "Métrique A1");
+                                ElementId tbId = tb.Id;
+
+                                //Create, number and name the sheets
+                                ViewSheet vSheet = ViewSheet.Create(doc, tbId);
+                                vSheet.Name = sheet.Name;
+                                vSheet.SheetNumber = sheet.Number;
+                            }
+
                         }
+
                         //Commit the sheets Transaction
                         sheetsTransaction.Commit();
                     }
@@ -317,12 +315,14 @@ namespace RAB_Skills02
         struct MySheetsStruct
         {
             public string Name;
-            public int Number;
+            public string Number;
 
-            public MySheetsStruct(string name, int number)
+            public MySheetsStruct(string name, string number)
             {
                 Name = name;
                 Number = number;
+
+
 
             }
         }

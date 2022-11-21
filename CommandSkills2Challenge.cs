@@ -25,10 +25,6 @@ namespace RAB_Skills02
 
             try
             {
-
-                Transaction levtransaction = new Transaction(doc);
-                levtransaction.Start("create levelsList");
-
                 //create levelsList from a csv file using OpenFileDialog
                 using (OpenFileDialog openfiledialog = new OpenFileDialog())
                 {
@@ -50,7 +46,8 @@ namespace RAB_Skills02
                         levArraydata = levArraydata.Where(w => w != levArraydata[0]).ToArray();
                         //create a transaction for the mylevelsList
 
-
+                        Transaction levtransaction = new Transaction(doc);
+                        levtransaction.Start("create levelsList");
 
                         foreach (string item in levArraydata)
                         {
@@ -62,15 +59,6 @@ namespace RAB_Skills02
 
                             List<MylevelsStruct> mylevList = new List<MylevelsStruct>();
                             mylevList.Add(mylevStruct);
-
-                            //create a list for csv lines
-                            //List<string> levelsList = new List<string>();
-
-                            ////levelsList.AddRange(arraydata);
-
-
-                            ////remove the header row
-                            //mySheetsList.RemoveAt(0);
 
                             //loop through the data (mySheetsList) 
                             foreach (MylevelsStruct level in mylevList)
@@ -85,16 +73,13 @@ namespace RAB_Skills02
                                 Level lev = Level.Create(doc, levfvalue);
                                 lev.Name = level.Name;
                                 //elementid levelid = lev.id;
-
                             }
-
                         }
-                    }
-                    //commit the levelsList transaction
-                    levtransaction.Commit();
-                    levtransaction.Dispose();
-                }
+                        //commit the levelsList transaction
+                        levtransaction.Commit();
 
+                    }
+                }
             }
             catch (Exception e)
             {
@@ -106,10 +91,6 @@ namespace RAB_Skills02
             {
                 //Create Viewplanes for each level in the doc
 
-                //Create a transaction for the viewplane creation
-                Transaction viewPlnTransaction = new Transaction(doc);
-                viewPlnTransaction.Start("Create viewPlans");
-
                 //Get viewFamilyTypes
                 FilteredElementCollector vftCollector = new FilteredElementCollector(doc);
                 vftCollector.OfClass(typeof(ViewFamilyType));
@@ -118,6 +99,10 @@ namespace RAB_Skills02
                 FilteredElementCollector levelsCollector = new FilteredElementCollector(doc);
                 levelsCollector.OfClass(typeof(Level))
                     .WhereElementIsNotElementType();
+
+                //Create a transaction for the viewplane creation
+                Transaction viewPlnTransaction = new Transaction(doc);
+                viewPlnTransaction.Start("Create viewPlans");
 
                 foreach (Level lvl in levelsCollector)
                 {
@@ -145,7 +130,7 @@ namespace RAB_Skills02
                 //Commit and dispose the viewPlans transaction
 
                 viewPlnTransaction.Commit();
-                viewPlnTransaction.Dispose();
+
             }
             catch (Exception e)
             {
@@ -158,9 +143,6 @@ namespace RAB_Skills02
 
             try
             {
-                //Create a transaction for the sheets
-                Transaction sheetsTransaction = new Transaction(doc);
-                sheetsTransaction.Start("Create Sheets");
 
                 using (OpenFileDialog openFileDialog = new OpenFileDialog())
                 {
@@ -168,6 +150,8 @@ namespace RAB_Skills02
                     openFileDialog.Filter = "csv files(*.csv)|*.csv|All files(*.*)|*.*";
                     //openFileDialog.FilterIndex = 2;
                     //openFileDialog.RestoreDirectory = true;
+
+
 
                     if (openFileDialog.ShowDialog() == DialogResult.OK)
                     {
@@ -182,6 +166,10 @@ namespace RAB_Skills02
                         //sheetsArrayData.Skip(0).ToArray();
                         sheetsArrayData = sheetsArrayData.Where(w => w != sheetsArrayData[0]).ToArray();
 
+                        //Create a transaction for the sheets
+                        Transaction sheetsTransaction = new Transaction(doc);
+                        sheetsTransaction.Start("Create Sheets");
+
                         foreach (var item in sheetsArrayData)
                         {
                             //Create an instance of the "mySheetsStruct" structure and populate the data from the SheetsList csv file  
@@ -193,28 +181,27 @@ namespace RAB_Skills02
                             List<MySheetsStruct> mySheetsList = new List<MySheetsStruct>();
                             mySheetsList.Add(mySheetsStruct);
 
+                            //Using the GetTitleBlockByName method (with a ENU template Imperial-Architectural Template")
+                            Element tb = GetTitleBlockByName(doc, "E1 30x42 Horizontal");
+                            //Using the GetTitleBlockByName method (with a french template "Gabarit de Construction")
+                            //Element tb = GetTitleBlockByName(doc, "Métrique A1");
+                            ElementId tbId = tb.Id;
 
                             //Loop through the data (Sheets)
                             foreach (MySheetsStruct sheet in mySheetsList)
                             {
-                                //Using the GetTitleBlockByName method (with a ENU template Imperial-Construction Template")
-                                Element tb = GetTitleBlockByName(doc,"E1 30x42 Horizontal");
-                                //Using the GetTitleBlockByName method (with a french template "Gabarit de Construction")
-                                //Element tb = GetTitleBlockByName(doc, "Métrique A1");
-                                ElementId tbId = tb.Id;
-
                                 //Create, number and name the sheets
                                 ViewSheet vSheet = ViewSheet.Create(doc, tbId);
                                 vSheet.Name = sheet.Number;
                                 vSheet.SheetNumber = sheet.Name;
                             }
                         }
+                        //Commit the sheets Transaction
+                        sheetsTransaction.Commit();
+                        sheetsTransaction.Dispose();
+
                     }
                 }
-                //Commit the sheets Transaction
-                sheetsTransaction.Commit();
-                sheetsTransaction.Dispose();
-
             }
             catch (Exception e)
             {
@@ -245,7 +232,7 @@ namespace RAB_Skills02
                     .ToList();
 
                 //testing the geViewByName without using it 
-                Element view = GetViewByName(doc, "Level01");
+                //Element view = GetViewByName(doc, "Level01");
 
                 foreach (var vSheet in viewSheets)
                 {
@@ -269,7 +256,7 @@ namespace RAB_Skills02
                     }
                 }
                 trans.Commit();
-                trans.Dispose();
+
             }
             catch (Exception e)
             {
@@ -282,10 +269,10 @@ namespace RAB_Skills02
 
         internal Element GetTitleBlockByName(Document doc, string name)
         {
-            FilteredElementCollector tbCollecor = new FilteredElementCollector(doc);
-            tbCollecor.OfCategory(BuiltInCategory.OST_TitleBlocks);
+            FilteredElementCollector tbCollector = new FilteredElementCollector(doc);
+            tbCollector.OfCategory(BuiltInCategory.OST_TitleBlocks);
 
-            foreach (Element tb in tbCollecor)
+            foreach (Element tb in tbCollector)
             {
 
                 if (tb.Name == name)

@@ -25,6 +25,10 @@ namespace RAB_Skills02
 
             try
             {
+
+                Transaction levtransaction = new Transaction(doc);
+                levtransaction.Start("create levelsList");
+
                 //create levelsList from a csv file using OpenFileDialog
                 using (OpenFileDialog openfiledialog = new OpenFileDialog())
                 {
@@ -39,14 +43,16 @@ namespace RAB_Skills02
                         string levfilepath = openfiledialog.FileName;
 
                         //create an array from the levelsList form a csv file
-                        string[] arraydata = File.ReadAllLines(levfilepath);
+                        string[] levArraydata = File.ReadAllLines(levfilepath);
 
                         //Remove the header row
                         //arraydata.Skip(0).ToArray();
-                        arraydata = arraydata.Where(w => w != arraydata[0]).ToArray();
+                        levArraydata = levArraydata.Where(w => w != levArraydata[0]).ToArray();
+                        //create a transaction for the mylevelsList
 
 
-                        foreach (string item in arraydata)
+
+                        foreach (string item in levArraydata)
                         {
                             //Create an instance of the "MyLevelStruct" structure adn populate the data from the levelsList csv file                            
                             MylevelsStruct mylevStruct = new MylevelsStruct();
@@ -66,10 +72,6 @@ namespace RAB_Skills02
                             ////remove the header row
                             //mySheetsList.RemoveAt(0);
 
-                            //create a transaction for the mylevelsList
-                            Transaction levtransaction = new Transaction(doc);
-                            levtransaction.Start("create levelsList");
-
                             //loop through the data (mySheetsList) 
                             foreach (MylevelsStruct level in mylevList)
                             {
@@ -85,12 +87,14 @@ namespace RAB_Skills02
                                 //elementid levelid = lev.id;
 
                             }
-                            //commit the levelsList transaction
-                            levtransaction.Commit();
-                            levtransaction.Dispose();
+
                         }
                     }
+                    //commit the levelsList transaction
+                    levtransaction.Commit();
+                    levtransaction.Dispose();
                 }
+
             }
             catch (Exception e)
             {
@@ -139,10 +143,25 @@ namespace RAB_Skills02
 
                 }
                 //Commit and dispose the viewPlans transaction
+
                 viewPlnTransaction.Commit();
                 viewPlnTransaction.Dispose();
+            }
+            catch (Exception e)
+            {
+                message = e.Message;
+                return Result.Failed;
+            }
 
-                //Create sheets from a csv file using OpenFileDialog
+
+            //Create sheets from a csv file using OpenFileDialog
+
+            try
+            {
+                //Create a transaction for the sheets
+                Transaction sheetsTransaction = new Transaction(doc);
+                sheetsTransaction.Start("Create Sheets");
+
                 using (OpenFileDialog openFileDialog = new OpenFileDialog())
                 {
                     openFileDialog.InitialDirectory = "C : \\";
@@ -160,11 +179,8 @@ namespace RAB_Skills02
                         string[] sheetsArrayData = File.ReadAllLines(ShtsfilePath);
 
                         //Remove the header row
-                        sheetsArrayData.Skip(0).ToArray();
-                        //Create a transaction for the sheets
-
-                        Transaction sheetsTransaction = new Transaction(doc);
-                        sheetsTransaction.Start("Create Sheets");
+                        //sheetsArrayData.Skip(0).ToArray();
+                        sheetsArrayData = sheetsArrayData.Where(w => w != sheetsArrayData[0]).ToArray();
 
                         foreach (var item in sheetsArrayData)
                         {
@@ -181,27 +197,24 @@ namespace RAB_Skills02
                             //Loop through the data (Sheets)
                             foreach (MySheetsStruct sheet in mySheetsList)
                             {
-                                //Create the vftCollector and get the title block element ID
-                                //FilteredElementCollector tBlockcollector = new FilteredElementCollector(doc);
-                                //ElementId titleBlockTypeId = tBlockcollector.OfCategory(BuiltInCategory.OST_TitleBlocks).FirstElementId();
-
-                                //Using the GetTitleBlockByName method
-                                //Element tb = GetTitleBlockByName(doc,"E1 30x42 Horizontal");
-                                Element tb = GetTitleBlockByName(doc, "Métrique A1");
+                                //Using the GetTitleBlockByName method (with a ENU template Imperial-Construction Template")
+                                Element tb = GetTitleBlockByName(doc,"E1 30x42 Horizontal");
+                                //Using the GetTitleBlockByName method (with a french template "Gabarit de Construction")
+                                //Element tb = GetTitleBlockByName(doc, "Métrique A1");
                                 ElementId tbId = tb.Id;
 
                                 //Create, number and name the sheets
                                 ViewSheet vSheet = ViewSheet.Create(doc, tbId);
-                                vSheet.Name = sheet.Name;
-                                vSheet.SheetNumber = sheet.Number;
+                                vSheet.Name = sheet.Number;
+                                vSheet.SheetNumber = sheet.Name;
                             }
-
                         }
-
-                        //Commit the sheets Transaction
-                        sheetsTransaction.Commit();
                     }
                 }
+                //Commit the sheets Transaction
+                sheetsTransaction.Commit();
+                sheetsTransaction.Dispose();
+
             }
             catch (Exception e)
             {
@@ -298,7 +311,6 @@ namespace RAB_Skills02
             return null;
         }
 
-
         struct MylevelsStruct
         {
             public string Name;
@@ -321,9 +333,6 @@ namespace RAB_Skills02
             {
                 Name = name;
                 Number = number;
-
-
-
             }
         }
     }

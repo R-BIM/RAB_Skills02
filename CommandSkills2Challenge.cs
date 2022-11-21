@@ -38,7 +38,10 @@ namespace RAB_Skills02
                         // get the csv file for the levels
                         string levfilepath = openfiledialog.FileName;
 
-                        //create the active document levels form a csv file
+
+
+                        
+                        //create levels form a csv file
                         string[] arraydata = File.ReadAllLines(levfilepath);
 
                         //create a list for csv lines
@@ -55,9 +58,14 @@ namespace RAB_Skills02
                         //loop through the data (levels) 
                         foreach (var level in levels)
                         {
+
                             //use string.split method to separate text file data
-                            string levelname = level.Split(',')[0];
-                            string levelvalue = level.Split(',')[2];
+                            string levelName = level.Split(',')[0];
+                            string levelValue = level.Split(',')[2];
+
+                            //Create a structure from the levels csv file
+                            //public MyStruct(string levelName, string elevationM, string elevationFT)
+                            MyStruct levStruct = new MyStruct(levelName, levelValue);
 
                             //change level elevation values from string to double
                             double levmvalue = Convert.ToDouble(levelvalue);
@@ -147,6 +155,9 @@ namespace RAB_Skills02
 
                         //Read the CSV lines
                         string[] sheetsArrayData = File.ReadAllLines(ShtsfilePath);
+
+                        //MyStruct levelStruct = new MyStruct();  
+                        //levelStruct.Name.Append<>
 
                         //Create a list for csv lines
                         List<string> sheets = new List<string>();
@@ -282,6 +293,19 @@ namespace RAB_Skills02
 
         }
 
+
+        struct MyStruct
+        {
+            public string Name;
+            public string Value;
+
+            public MyStruct(string name, string value)
+            {
+                Name = name;
+                Value = value;               
+            }
+
+        }
 
     }
 }

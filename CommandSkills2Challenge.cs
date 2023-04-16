@@ -60,6 +60,7 @@ namespace RAB_Skills02
 
                 // Create a list to store the column (Level Name) contents
                 List<string> levelsNames = new List<string>();
+
                 for (int i = 1; i <= rows; i++)
                 {
 
@@ -74,10 +75,11 @@ namespace RAB_Skills02
 
                 // Create a list to store the column (Level elevation feet) contents
                 List<string> elevationFeet = new List<string>();
+
                 for (int i = 1; i <= rows; i++)
                 {
 
-                    for (int j = 2; j <= 1; j++)
+                    for (int j = 2; j <= 2; j++)
                     {
                         string cellContent1 = range.Cells[i, j].Value.ToString();
                         elevationFeet.Add(cellContent1);
@@ -86,17 +88,21 @@ namespace RAB_Skills02
 
                 }
 
+                //Remove the title cells
                 levelsNames.RemoveAt(0);
                 elevationFeet.RemoveAt(0);
 
+                IList<double> levels = new List<double>();  
+                //Convert string to double
+                double elevation = 0;
+                foreach (var item in elevationFeet)
+                {
+                    double.TryParse(item, out(elevation));
+                    levels.Add(elevation);
+                }
 
-                //foreach (var level in levelsNames)
-                //{
-                //  Level lev = Level.Create(doc,)
-                    
-                //}
 
-                //TaskDialog.Show("Information",levelsNames.ForEach()
+                
 
                 return Result.Succeeded;
             }

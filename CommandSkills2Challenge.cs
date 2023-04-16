@@ -4,7 +4,6 @@ using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using System.Collections.Generic;
-using System.Linq;
 using Excel = Microsoft.Office.Interop.Excel;
 using Forms = System.Windows.Forms;
 
@@ -63,51 +62,72 @@ namespace RAB_Skills02
 
                 for (int i = 1; i <= rows; i++)
                 {
-
                     for (int j = 1; j <= 1; j++)
                     {
-                        string cellContent = range.Cells[i,j].Value.ToString();
+                        string cellContent = range.Cells[i, j].Value.ToString();
                         levelsNames.Add(cellContent);
                     }
-
-
                 }
 
                 // Create a list to store the column (Level elevation feet) contents
-                List<string> elevationFeet = new List<string>();
+                List<string> elevationsFeet = new List<string>();
 
                 for (int i = 1; i <= rows; i++)
                 {
-
                     for (int j = 2; j <= 2; j++)
                     {
                         string cellContent1 = range.Cells[i, j].Value.ToString();
-                        elevationFeet.Add(cellContent1);
+                        elevationsFeet.Add(cellContent1);
                     }
-
-
                 }
 
-                //Remove the title cells
+                //Remove the header row
                 levelsNames.RemoveAt(0);
-                elevationFeet.RemoveAt(0);
+                elevationsFeet.RemoveAt(0);
 
-                IList<double> levels = new List<double>();  
+                //change level elevation values from string to double
+                IList<double> levelsfd = new List<double>();
                 //Convert string to double
                 double elevation = 0;
-                foreach (var item in elevationFeet)
+
+                foreach (var elevf in elevationsFeet)
                 {
-                    double.TryParse(item, out(elevation));
-                    levels.Add(elevation);
+                    //double levfvalue = Convert.ToDouble(elevf);
+                    double.TryParse(elevf, out (elevation));
+                    levelsfd.Add(elevation);
+
+
+                }
+                using (Transaction t = new Transaction(doc, "Create levels"))
+                {
+                    t.Start();
+
+                    foreach (var levelName in levelsNames)
+                    {
+                        foreach (var levelfd in levelsfd)
+                        {
+
+                            //create and name the levelsList
+                            Level lev = Level.Create(doc, levelfd);
+                            lev.Name = levelName;
+                            //elementid levelid = lev.id;
+
+                        }
+
+
+                    }
+
+                    t.Commit();
+
                 }
 
-
-                
 
                 return Result.Succeeded;
             }
 
-            
+
+
+
 
         }
 
@@ -345,35 +365,35 @@ namespace RAB_Skills02
         //}
 
         internal Element GetTitleBlockByName(Document doc, string name)
+        {
+            FilteredElementCollector tbCollector = new FilteredElementCollector(doc);
+            tbCollector.OfCategory(BuiltInCategory.OST_TitleBlocks);
+
+            foreach (Element tb in tbCollector)
             {
-                FilteredElementCollector tbCollector = new FilteredElementCollector(doc);
-                tbCollector.OfCategory(BuiltInCategory.OST_TitleBlocks);
 
-                foreach (Element tb in tbCollector)
-                {
+                if (tb.Name == name)
 
-                    if (tb.Name == name)
-
-                        return tb;
-                }
-
-                return null;
-
+                    return tb;
             }
 
-            internal Element GetViewByName(Document doc, string name)
+            return null;
+
+        }
+
+        internal Element GetViewByName(Document doc, string name)
+        {
+            FilteredElementCollector vCollecor = new FilteredElementCollector(doc);
+            vCollecor.OfCategory(BuiltInCategory.OST_Views);
+
+            foreach (Element v in vCollecor)
             {
-                FilteredElementCollector vCollecor = new FilteredElementCollector(doc);
-                vCollecor.OfCategory(BuiltInCategory.OST_Views);
 
-                foreach (Element v in vCollecor)
-                {
-
-                    if (v.Name == name)
-                        return v;
-                }
-                return null;
+                if (v.Name == name)
+                    return v;
             }
+            return null;
+        }
 
         struct MylevelsStruct
         {

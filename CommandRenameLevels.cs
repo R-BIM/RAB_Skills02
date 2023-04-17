@@ -15,7 +15,7 @@ using Forms = System.Windows.Forms;
 namespace RAB_Skills02
 {
     [Transaction(TransactionMode.Manual)]
-    public class CommandSkills2Challenge : IExternalCommand
+    public class CommandRenameLevels : IExternalCommand
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
@@ -104,33 +104,24 @@ namespace RAB_Skills02
                         levelsfd.Add(elevation);
                     }
 
+                    //Rename the levels
+                    FilteredElementCollector levcollector = new FilteredElementCollector(doc);
+                    IList<Element> elist = levcollector.OfCategory(BuiltInCategory.OST_Levels)
+                        .WhereElementIsNotElementType()
+                        .ToElements().ToList();
+
                     foreach (var levelfd in levelsfd)
                     {
-                        //create and name the levelsList
-                        Level lev = Level.Create(doc, levelfd);
-                        lev.Name = levelsNames[levelsfd.IndexOf(levelfd)];
+ 
 
-                        ElementId levelid = lev.Id;
+                        foreach (var level in elist)
+                        {
+                            // Set the level name using the corresponding index in levelsNames list
+                            level.Name = levelsNames[levelsfd.IndexOf(levelfd)];
+
+                        }
 
                     }
-
-                    //Loop through the levels
-                    //FilteredElementCollector levcollector = new FilteredElementCollector(doc);
-                    //IList<Element> elist = levcollector.OfCategory(BuiltInCategory.OST_Levels)
-                    //    .WhereElementIsNotElementType()
-                    //    .ToElements().ToList();
-
-                    //foreach (var level in elist)
-                    //{
-                    //    foreach (var levName in levelsNames)
-                    //    {
-                    //        level.Name = levName;
-                    //    }
-                    //}
-
-
-
-
 
                     t.Commit();
 

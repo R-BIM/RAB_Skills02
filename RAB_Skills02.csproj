@@ -54,6 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App.cs" />
+    <Compile Include="CommandRenameLevels.cs" />
     <Compile Include="CommandSkills2Challenge.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
